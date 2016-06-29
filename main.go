@@ -37,7 +37,7 @@ func main() {
 	var password string
 
 	flag.BoolVar(&debugMode, "d", false, "Enable debug mode")
-	flag.Var(&hashPerSeconds, "r", "rate aka. Hash/sec (available suffix: G M K)")
+	flag.Var(&hashPerSeconds, "r", "rate aka. Hash/sec (available suffix: G M K)\n     \tor use 'auto' to calculate on the fly")
 
 	flag.Parse()
 

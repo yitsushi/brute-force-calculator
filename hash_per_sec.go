@@ -1,9 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type HashPerSec uint64
@@ -21,6 +23,14 @@ func (hsp *HashPerSec) String() string {
 }
 
 func (hsp *HashPerSec) Set(value string) error {
+	if value == "auto" {
+		if debugMode {
+			fmt.Println("Calculate HasPerSec value based on your computation power with MD5...")
+		}
+		*hsp = messureMD5HashPerSec()
+		return nil
+	}
+
 	simpleValue := value[0 : len(value)-1]
 	suffix := strings.ToLower(value[len(value)-1:])
 
@@ -45,4 +55,39 @@ func (hsp *HashPerSec) Set(value string) error {
 	}
 
 	return nil
+}
+
+func messureMD5HashPerSec() HashPerSec {
+	data := []byte("These pretzels are making me thirsty.")
+	counter := 0
+	max := 100000000
+
+	startTime := time.Now().UnixNano()
+	for {
+		md5.Sum(data)
+		counter++
+		if counter >= max {
+			break
+		}
+		if debugMode {
+			if counter%1000000 == 0 {
+				fmt.Printf(".")
+			}
+		}
+	}
+	endTime := time.Now().UnixNano()
+
+	durationInSeconds := int64((endTime - startTime) / int64(time.Second))
+
+	if debugMode {
+		fmt.Printf("\n")
+		fmt.Printf(
+			"%d hashes over %d seconds => %d\n",
+			counter,
+			durationInSeconds,
+			int64(counter)/durationInSeconds,
+		)
+	}
+
+	return HashPerSec(int64(counter) / durationInSeconds)
 }
