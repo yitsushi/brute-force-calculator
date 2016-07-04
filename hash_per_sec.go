@@ -24,10 +24,32 @@ func (hsp *HashPerSec) String() string {
 
 func (hsp *HashPerSec) Set(value string) error {
 	if value == "auto" {
-		if debugMode {
-			fmt.Println("Calculate HasPerSec value based on your computation power with MD5...")
+		fmt.Println("Calculate HasPerSec value based on your computation power with MD5...")
+
+		valueChannel := make(chan HashPerSec)
+		progressChannel := make(chan int)
+
+		go messureMD5HashPerSec(progressChannel, valueChannel)
+
+		for {
+			select {
+			case progressValue := <-progressChannel:
+				{
+					fmt.Printf("\rProgress: %d%%", progressValue)
+				}
+			case finalValue := <-valueChannel:
+				{
+					*hsp = finalValue
+
+					return nil
+				}
+			default:
+				{
+					time.Sleep(50 * time.Millisecond)
+				}
+			}
 		}
-		*hsp = messureMD5HashPerSec()
+
 		return nil
 	}
 
@@ -57,7 +79,7 @@ func (hsp *HashPerSec) Set(value string) error {
 	return nil
 }
 
-func messureMD5HashPerSec() HashPerSec {
+func messureMD5HashPerSec(progressChannel chan int, valueChannel chan HashPerSec) {
 	data := []byte("These pretzels are making me thirsty.")
 	counter := 0
 	max := 100000000
@@ -67,27 +89,32 @@ func messureMD5HashPerSec() HashPerSec {
 		md5.Sum(data)
 		counter++
 		if counter >= max {
+			progressChannel <- 100
 			break
 		}
-		if debugMode {
-			if counter%1000000 == 0 {
-				fmt.Printf(".")
-			}
+		if counter%int(max/100) == 0 {
+			percentage := int(float64(counter) / float64(max) * 100)
+			progressChannel <- percentage
 		}
 	}
 	endTime := time.Now().UnixNano()
 
 	durationInSeconds := int64((endTime - startTime) / int64(time.Second))
 
-	if debugMode {
-		fmt.Printf("\n")
-		fmt.Printf(
-			"%d hashes over %d seconds => %d\n",
-			counter,
-			durationInSeconds,
-			int64(counter)/durationInSeconds,
-		)
-	}
+	fmt.Printf("\n")
+	fmt.Printf(
+		"%d hashes over %d seconds => %d\n",
+		counter,
+		durationInSeconds,
+		int64(counter)/durationInSeconds,
+	)
 
-	return HashPerSec(int64(counter) / durationInSeconds)
+	if durationInSeconds == 0 {
+		valueChannel <- HashPerSec(int64(counter))
+	} else {
+		valueChannel <- HashPerSec(int64(counter) / durationInSeconds)
+	}
+	close(valueChannel)
+
+	return
 }
