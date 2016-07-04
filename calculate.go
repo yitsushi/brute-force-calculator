@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"strings"
 )
@@ -32,7 +31,7 @@ func calculate(password string) float64 {
 	var charset string
 
 	charset = getCharsetForPassword(password)
-	fmt.Printf("'%s' with '%s'\n", password, charset)
+	// fmt.Printf("'%s' with '%s'\n", password, charset)
 	var attempts float64 = 0
 
 	passwordLength := len(password)

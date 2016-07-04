@@ -22,8 +22,6 @@ func CLIDisplay() {
 
 	seconds := calculate(password)
 
-	fmt.Printf("[D] Seconds: %0.2f\n", seconds)
-
 	if seconds > OneYearInSeconds {
 		years := seconds / OneYearInSeconds
 		suffix := ""
